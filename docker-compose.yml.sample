@@ -1,0 +1,16 @@
+version: "3.8"
+services:
+    caldav-reminder-telegram-bot:
+      container_name: "caldav-reminder-telegram-bot"  # Name of the container
+      image: mcdax/caldav-reminder-telegram-bot:latest
+      environment:
+        - CALDAV_URL=https://<url>/SOGo/dav/  # CalDAV server URL
+        - CALDAV_USERNAME=  # CalDAV server username
+        - CALDAV_PASSWORD=  # CalDAV server password
+        - CALENDAR_IDS=cal_id1;cal_id2  # Calendar IDs to be synced
+        - SYNC_INTERVAL_IN_SEC=1800  # Sync interval in seconds
+        - FETCH_EVENT_WINDOW_IN_DAYS=5  # Number of days in advance to fetch events
+        - TIMEZONE=Europe/Berlin  # Timezone for date/time operations
+        - TELEGRAM_BOT_TOKEN=  # Telegram bot token
+        - TELEGRAM_CHAT_ID=  # Telegram chat ID for reminders
+      restart: unless-stopped  # Restart policy

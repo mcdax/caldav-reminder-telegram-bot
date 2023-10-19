@@ -214,24 +214,28 @@ class Worker:
     async def sync(self) -> None:
         """Synchronize calendars and reminders with the server."""
         logging.info('Syncing...')
-        if self.cals is None:
-            self.cals = self.calHandler.fetch_calendars()
+        try:
             if self.cals is None:
-                logging.error("Cannot sync calendar")
-                return
+                self.cals = self.calHandler.fetch_calendars()
+                if self.cals is None:
+                    logging.error('Cannot sync calendar')
+                    return
 
-        cals_subscripted = list(filter(lambda x: x.id in self.config.CALENDAR_IDS, self.cals))
-        events = self.calHandler.fetch_events(cals_subscripted)
-        if events:
-            sorted_reminders_new = self.calHandler.extract_reminders(events)
-            if sorted_reminders_new != self.sorted_reminders:
-                self.sorted_reminders = sorted_reminders_new
-                self.scheduleReminderTask()
+            cals_subscripted = list(filter(lambda x: x.id in self.config.CALENDAR_IDS, self.cals))
+            events = self.calHandler.fetch_events(cals_subscripted)
+            if events:
+                sorted_reminders_new = self.calHandler.extract_reminders(events)
+                if sorted_reminders_new != self.sorted_reminders:
+                    self.sorted_reminders = sorted_reminders_new
+                    self.scheduleReminderTask()
 
-        next_sync_dt = datetime.now(tz=self.config.TIMEZONE) + \
-            relativedelta(seconds=int(self.config.SYNC_INTERVAL_IN_SEC))
-        loop = asyncio.get_event_loop()
-        loop.create_task(self.run_at(next_sync_dt, self.sync))
+            next_sync_dt = datetime.now(tz=self.config.TIMEZONE) + \
+                relativedelta(seconds=int(self.config.SYNC_INTERVAL_IN_SEC))
+        except Exception as e:
+            logging.error(f'Exception occured: {e}')
+        finally:
+            loop = asyncio.get_event_loop()
+            loop.create_task(self.run_at(next_sync_dt, self.sync))
 
     async def process_reminders(self):
         """Process reminders and send notifications."""

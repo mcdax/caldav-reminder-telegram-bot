@@ -256,7 +256,7 @@ class Worker:
             if reminder.dt <= datetime.now(tz=self.config.TIMEZONE):
                 logging.info(f'Sending reminder for {reminder.vevent.summary.value}')
                 bot = telegram.Bot(self.config.TELEGRAM_BOT_TOKEN)
-                await bot.send_message(text=f'<b>Reminder</b>\r\n{reminder.vevent.summary.value}: {reminder.vevent.dtstart.value.strftime("%d.%m.%Y %H:%M:%S")}',
+                await bot.send_message(text=f'<b>{reminder.vevent.summary.value}</b>\r\n{reminder.vevent.dtstart.value.strftime("%d.%m.%Y %H:%M:%S")}',
                                        chat_id=self.config.TELEGRAM_CHAT_ID, parse_mode=ParseMode.HTML)
                 return True
         return False

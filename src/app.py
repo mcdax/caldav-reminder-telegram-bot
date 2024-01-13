@@ -229,11 +229,12 @@ class Worker:
                     self.sorted_reminders = sorted_reminders_new
                     self.scheduleReminderTask()
 
-            next_sync_dt = datetime.now(tz=self.config.TIMEZONE) + \
-                relativedelta(seconds=int(self.config.SYNC_INTERVAL_IN_SEC))
         except Exception as e:
             logging.error(f'Exception occured: {e}')
         finally:
+            next_sync_dt = datetime.now(tz=self.config.TIMEZONE) + \
+                relativedelta(seconds=int(self.config.SYNC_INTERVAL_IN_SEC))
+
             loop = asyncio.get_event_loop()
             loop.create_task(self.run_at(next_sync_dt, self.sync))
 

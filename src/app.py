@@ -43,8 +43,8 @@ class Config:
 class Reminder:
     """Class representing a reminder."""
     dt: datetime
-    valarm: caldav.vobject.base.Component
-    vevent: caldav.vobject
+    valarm: caldav.vobject.base.Component = field(compare = False)
+    vevent: caldav.vobject = field(compare = False)
 
 
 @dataclass()
@@ -151,7 +151,7 @@ class CaldavHandler:
                 logged_events += \
                     f'\t{event.vevent.summary.value} ({event.vevent.uid.value}): {event.vevent.dtstart.value}\n'
 
-            logging.debug(f'Fetched events:\n{logged_events}')
+            logging.debug(f'Fetched events({len(eventsData)}):\n{logged_events}')
         return eventsData
 
     def extract_reminders(self, events: List[Event]) -> List[Reminder]:

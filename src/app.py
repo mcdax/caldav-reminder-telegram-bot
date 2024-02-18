@@ -3,7 +3,7 @@ import sys
 import asyncio
 import logging
 from typing import List, Optional
-from datetime import date, time, datetime
+from datetime import date, time, datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from dataclasses import dataclass, field
 from pytz import timezone
@@ -127,20 +127,29 @@ class CaldavHandler:
 
             for event in events:
                 vevent = event.vobject_instance.vevent
+                logging.debug(f'Processing event: {vevent.summary.value} (id: {vevent.uid.value}, dtstart: {vevent.dtstart.value})')
+
                 dtstart = vevent.dtstart.value
 
                 if type(dtstart) == date:
                     dtstart = datetime.combine(dtstart, time(0, 0))
+                    logging.debug(f'All-Day Event. Start-Time added: {dtstart}')
 
                 if (dtstart.tzinfo is None or dtstart.tzinfo.utcoffset(dtstart) is None):
                     dtstart = self.config.TIMEZONE.localize(dtstart)
+                    logging.debug(f'Timezone added to dtstart: {dtstart}')
 
                 vevent.dtstart.value = dtstart.astimezone(self.config.TIMEZONE)
                 dtstart = vevent.dtstart.value
                 event = Event(vevent=vevent)
 
                 for valarm in vevent.components():
-                    alarm_dt = dtstart + valarm.trigger.value
+                    trigger = valarm.trigger.value
+                    logging.debug(f'Found reminder: {trigger} ({type(trigger)})')
+                    if isinstance(trigger, timedelta):
+                        alarm_dt = dtstart + trigger
+                    else:
+                        alarm_dt = trigger
                     event.reminders.append(Reminder(dt=alarm_dt, valarm=valarm, vevent=vevent))
 
                 eventsData.append(event)
@@ -230,7 +239,8 @@ class Worker:
                     self.scheduleReminderTask()
 
         except Exception as e:
-            logging.error(f'Exception occured: {e}')
+            logging.error(f'Exception occured')
+            logging.exception(e)
         finally:
             next_sync_dt = datetime.now(tz=self.config.TIMEZONE) + \
                 relativedelta(seconds=int(self.config.SYNC_INTERVAL_IN_SEC))
